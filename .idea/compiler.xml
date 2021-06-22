@@ -2,6 +2,7 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="8">
+      <module name="CAS" target="1.5" />
       <module name="Thread_Concept" target="1.5" />
     </bytecodeTargetLevel>
   </component>
