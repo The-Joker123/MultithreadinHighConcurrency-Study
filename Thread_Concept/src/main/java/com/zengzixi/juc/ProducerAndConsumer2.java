@@ -2,12 +2,15 @@ package com.zengzixi.juc;
 
 import com.oracle.jrockit.jfr.Producer;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-public class ProducerAndConsumer {
+public class ProducerAndConsumer2 {
 
     public static void main(String[] args) {
-      Data data=new Data();
+        Data data=new Data();
         new Thread(()->{
             try {
                 for (int i = 0; i <10 ; i++) {
@@ -65,35 +68,48 @@ public class ProducerAndConsumer {
     }
 
     static class Data{
-         int number=0;
-        public synchronized void add() throws InterruptedException {
-//            while (number!=0){
+        int number=0;
+        Lock lock=new ReentrantLock();
+        Condition condition = lock.newCondition();
+
+        public  void add() throws InterruptedException {
+            lock.lock();
+            try{
+                while (number!=0){
+                    condition.await();
+                }
+                number++;
+                System.out.println(Thread.currentThread().getName()+number);
+                condition.signalAll();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }finally {
+                lock.unlock();
+            }
+
+//            if(number!=0){
 //                this.wait();
 //
 //            }
-            if(number!=0){
-                this.wait();
 
-            }
-            number++;
-            System.out.println(Thread.currentThread().getName()+number);
-            this.notifyAll();
+
+
         }
         public synchronized void decrease() throws InterruptedException {
-//            while (number==0){
-//                this.wait();
-//
-//            }
-            //如果用if会造成虚假唤醒，A如果发现是0了，就会wait()释放锁
-            if(number==0){
-                this.wait();//线程休眠，并释放了锁
-                System.out.println(Thread.currentThread().getName()+":"+Thread.currentThread().getState());
-
+            lock.lock();
+            try{
+                while (number==0){
+                    condition.await();
+                }
+                number--;
+                System.out.println(Thread.currentThread().getName()+number);
+                  condition.signalAll();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }finally {
+                lock.unlock();
             }
-            number--;
-            System.out.println(Thread.currentThread().getName()+number);
 
-            this.notifyAll();//线程唤醒后执行wait()之后的代码，不再执行if,while
         }
     }
 
